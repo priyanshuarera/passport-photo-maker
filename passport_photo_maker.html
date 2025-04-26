@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Passport Photo Maker (Advanced Features)</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f0f0f0, #d0d0d0);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      padding-top: 50px;
+      margin: 0;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    #uploadBtn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-bottom: 20px;
+    }
+    #uploadBtn:hover {
+      background-color: #0056b3;
+    }
+    #fileInput {
+      display: none;
+    }
+    #photo {
+      margin-top: 20px;
+      max-width: 220px;
+      display: none;
+      border: 4px solid #007bff;
+      border-radius: 12px;
+    }
+    #generateBtn, #cropBtn, #colorPickerBtn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: none;
+      transition: background 0.3s;
+    }
+    #generateBtn:hover, #cropBtn:hover, #colorPickerBtn:hover {
+      background-color: #1e7e34;
+    }
+    canvas {
+      margin-top: 30px;
+      border: 1px solid #ccc;
+      display: none;
+      background: white;
+    }
+    #downloadBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #ffc107;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+    }
+    #downloadBtn:hover {
+      background: #e0a800;
+    }
+    #backgroundColor {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: inline-block;
+    }
+    #backgroundColor:hover {
+      background-color: #e65100;
+    }
+    #colorPicker {
+      display: none;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎯 Passport Photo Maker (Advanced Features)</h1>
+
+<button id="uploadBtn">📁 Upload Photo</button>
+<input type="file" id="fileInput" accept="image/*">
+
+<img id="photo">
+<br>
+<button id="cropBtn">Crop Photo</button>
+<button id="generateBtn">Generate Passport Size Photo</button>
+<button id="colorPickerBtn">Change Background Color</button>
+
+<div id="colorPicker">
+  <input type="color" id="backgroundColor" value="#ffffff">
+</div>
+
+<canvas id="canvas" width="413" height="531"></canvas>
+<br>
+<a id="downloadBtn" download="passport_photo.jpg">Download Passport Photo</a>
+
+<script>
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
+const photo = document.getElementById('photo');
+const generateBtn = document.getElementById('generateBtn');
+const cropBtn = document.getElementById('cropBtn');
+const colorPickerBtn = document.getElementById('colorPickerBtn');
+const backgroundColor = document.getElementById('backgroundColor');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const downloadBtn = document.getElementById('downloadBtn');
+const colorPicker = document.getElementById('colorPicker');
+
+let img = new Image();
+let cropping = false;
+let startX, startY, cropWidth, cropHeight;
+let bgColor = "#ffffff"; // Default background color
+
+uploadBtn.addEventListener('click', () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    img.src = event.target.result;
+    img.onload = () => {
+      photo.src = img.src;
+      photo.style.display = 'block';
+      generateBtn.style.display = 'inline-block';
+      cropBtn.style.display = 'inline-block';
+      colorPickerBtn.style.display = 'inline-block';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+  }
+  reader.readAsDataURL(file);
+});
+
+colorPickerBtn.addEventListener('click', () => {
+  colorPicker.style.display = 'block';
+});
+
+backgroundColor.addEventListener('input', (e) => {
+  bgColor = e.target.value; // Update background color
+});
+
+cropBtn.addEventListener('click', () => {
+  cropping = true;
+  ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+
+  cropWidth = 413;  // passport photo size width
+  cropHeight = 531; // passport photo size height
+  startX = (canvas.width - cropWidth) / 2;
+  startY = (canvas.height - cropHeight) / 2;
+
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = '#ff0000';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(startX, startY, cropWidth, cropHeight);
+  
+  ctx.drawImage(img, 0, 0, img.width, img.height, startX, startY, cropWidth, cropHeight);
+});
+
+generateBtn.addEventListener('click', () => {
+  // Set background color
+  ctx.fillStyle = bgColor; // White or user-selected color
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const croppedImageData = ctx.getImageData(startX, startY, cropWidth, cropHeight);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.putImageData(croppedImageData, 0, 0);
+  canvas.style.display = 'block';
+
+  downloadBtn.style.display = 'inline-block';
+  downloadBtn.href = canvas.toDataURL('image/jpeg');
+});
+</script>
+
+</body>
+</html>
